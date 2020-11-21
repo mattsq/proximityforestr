@@ -30,3 +30,20 @@ fit_proximityforest <- function(data, ...) {
   weighted_child_impurity <- (DescTools::Gini(L$target) * nrow(L) +
     DescTools::Gini(R$target) * nrow(R))/nrow(data)
 }
+
+create_proxforest_node <- function(indexes,
+                                   dist_measure,
+                                   class_0_exemplar,
+                                   class_1_exemplar) {
+  structure(
+    list(
+      node_data_indexes = indexes,
+      dist_measure = dist_measure,
+      class_0_exemplar = class_0_exemplar,
+      class_1_exemplar = class_1_exemplar,
+      left_child_node = NA,
+      right_child_node = NA
+    ),
+    class = "proxforest_node"
+  )
+}
