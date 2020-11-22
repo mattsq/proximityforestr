@@ -1,11 +1,13 @@
 data <- tsforest::FreezerRegularTrain_TRAIN
-mtry <- 50
+mtry <- 10
 #
 # Remaining questions:
-# - How do you store the splits (as a tree of indexes?)
-# - need to be able recursively calculate many different distance measures and exemplars
+# - How do you store the splits (as a tree of indexes?) - DONE
+# - need to be able recursively calculate many different distance measures and exemplars - DONE
 # - how do you apply it recursively
-# - how do you split the data on a new data set (store the exemplars and distance measures at each split?)
+# - the tree itself reaches purity (disturbingly) quickly - but I can't immediately
+#   see how to grow it in a recursive way. Need to go look at some examples
+# - how do you split the data on a new data set (store the exemplars and distance measures at each split?) - DONE
 # - build a proximity forest (not just a tree) and the voting mechanism
 
 create_proxforest_node <- function(indexes,
@@ -23,10 +25,13 @@ create_proxforest_node <- function(indexes,
       weighted_child_impurity = weighted_child_impurity,
       left = list(
         indexes = L_idx,
-        child_node = NA),
+        child_node = NA,
+        leaf = 0
+        ),
       right = list(
         indexes = R_idx,
-        child_node = NA
+        child_node = NA,
+        leaf = 0
       )
     ),
     class = "proxforest_node"
@@ -90,9 +95,24 @@ select_proximityforest_nodesplit <- function(data, mtry, ...) {
 
 fit_proximityforest <- function(data, mtry, node_depth) {
   parent_node <- select_proximityforest_nodesplit(data = data, mtry = mtry)
-  parent_node$left$child_node <- select_proximityforest_nodesplit(data[parent_node$left$indexes,], mtry)
-  parent_node$right$child_node <- select_proximityforest_nodesplit(data[parent_node$right$indexes,], mtry)
-  parent_node$right$child_node$left$child_node <- select_proximityforest_nodesplit(data[parent_node$right$child_node$left$indexes,], mtry)
+  if (DescTools::Gini(data[parent_node$left$indexes,]$target) == 0) {
+    parent_node$left$leaf <- 1
+  }
+  if (DescTools::Gini(data[parent_node$right$indexes,]$target) == 0) {
+    parent_node$right$leaf <- 1
+  }
+  left <- select_proximityforest_nodesplit(data = data[parent_node$left$indexes,], mtry = mtry)
+  DescTools::Gini(data[left$left$indexes,]$target)
+  DescTools::Gini(data[left$right$indexes,]$target)
+  right <- select_proximityforest_nodesplit(data = data[parent_node$right$indexes,], mtry = mtry)
+  DescTools::Gini(data[right$left$indexes,]$target)
+  DescTools::Gini(data[right$right$indexes,]$target)
+  right_left <- select_proximityforest_nodesplit(data = data[right$left$indexes,], mtry = mtry)
+  DescTools::Gini(data[right_left$left$indexes,]$target)
+  DescTools::Gini(data[right_left$right$indexes,]$target)
+  right_right <- select_proximityforest_nodesplit(data = data[right$right$indexes,], mtry = mtry)
+  DescTools::Gini(data[right_right$left$indexes,]$target)
+  DescTools::Gini(data[right_right$right$indexes,]$target)
 
 
 }
