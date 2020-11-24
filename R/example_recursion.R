@@ -47,3 +47,58 @@ undebug(grow_greedy_tree)
 l <- grow_greedy_tree(seq = seq, num = rnorm(10), mtry = 50)
 unlist(l)
 
+grow_greedy_distance_tree <- function(seq, num, mtry) {
+
+  if(length(seq) == 1 | var(seq) == 0) return(c(seq))
+
+  parent_gini <- DescTools::Gini(seq, unbiased = FALSE)
+
+  weighted_child_gini <- numeric(mtry)
+  gain <- numeric(mtry)
+  examplars_1 <- numeric(mtry)
+  examplars_2 <- numeric(mtry)
+  dist_mat <- as.matrix(dist(num))
+
+  for (k in 1:mtry) {
+    exemplar_1_idx <- sample(which(seq == 1),1)
+    exemplar_2_idx <- sample(which(seq == 2),1)
+    examplar_1_dist <- dist_mat[exemplar_1_idx,]
+    examplar_2_dist <- dist_mat[exemplar_2_idx,]
+    idx <- which(examplar_1_dist < examplar_2_dist)
+    seq_l <- seq[idx]
+    seq_r <- seq[-idx]
+    weighted_child_gini[k] <- DescTools::Gini(seq_l, unbiased = FALSE) * length(seq_l) + DescTools::Gini(seq_l, unbiased = FALSE) * length(seq_l)
+    gain[k] <- parent_gini - weighted_child_gini[k]
+    examplars_1[k] <- exemplar_1_idx
+    examplars_2[k] <- exemplar_2_idx
+  }
+
+  best_examplar_1 <- examplars_1[which.max(gain)]
+  best_examplar_2 <- examplars_2[which.max(gain)]
+  examplar_1_dist <- dist_mat[best_examplar_1,]
+  examplar_2_dist <- dist_mat[best_examplar_2,]
+
+  idx <- which(examplar_1_dist < examplar_2_dist)
+
+  seq_l <- seq[idx]
+  num_l <- num[idx]
+  seq_r <- seq[-idx]
+  num_r <- num[-idx]
+
+  cat(seq_l, "<->", seq_r, "\n")
+  cat(num_l, "<->", num_r, "\n")
+
+  if (is.null(seq_l)) {
+    grow_greedy_distance_tree(seq_r, num_r, mtry)
+  } else if (is.null(seq_r)) {
+    grow_greedy_distance_tree(seq_l, num_l, mtry)
+  } else {
+
+    list(grow_greedy_distance_tree(seq_l, num_l, mtry), grow_greedy_distance_tree(seq_r, num_r, mtry))
+  }
+}
+
+seq <- rbinom(20, 1, prob = .5) + 1
+undebug(grow_greedy_distance_tree)
+l <- grow_greedy_distance_tree(seq = seq, num = rnorm(20), mtry = 3)
+unlist(l)
