@@ -85,8 +85,10 @@ grow_greedy_distance_tree <- function(seq, num, mtry) {
   seq_r <- seq[-idx]
   num_r <- num[-idx]
 
-  cat(seq_l, "<->", seq_r, "\n")
-  cat(num_l, "<->", num_r, "\n")
+#  cat("Examplar 1:", num[best_examplar_1], "Examplar 2:", num[best_examplar_2],"\n")
+#  cat("Class split:", seq_l, "<->", seq_r, "\n")
+#  cat("Value Split:", num_l, "<->", num_r, "\n")
+#  cat("----------------------------------------\n")
 
   if (is.null(seq_l)) {
     grow_greedy_distance_tree(seq_r, num_r, mtry)
@@ -98,7 +100,10 @@ grow_greedy_distance_tree <- function(seq, num, mtry) {
   }
 }
 
-seq <- rbinom(20, 1, prob = .5) + 1
+n <- 500
+
+seq <- rbinom(n, 1, prob = .5) + 1
+num <- dplyr::if_else(seq == 1, rnorm(n, 2), rnorm(n,0))
 undebug(grow_greedy_distance_tree)
-l <- grow_greedy_distance_tree(seq = seq, num = rnorm(20), mtry = 3)
-unlist(l)
+l <- grow_greedy_distance_tree(seq = seq, num = num, mtry = n)
+-unlist(l)
