@@ -42,7 +42,7 @@ grow_greedy_tree <- function(seq, num, mtry) {
   }
 }
 
-seq <- rbinom(10, 1, prob = .5) + 1
+seq <- rbinom(1000, 1, prob = .5) + 1
 undebug(grow_greedy_tree)
 l <- grow_greedy_tree(seq = seq, num = rnorm(10), mtry = 50)
 unlist(l)
@@ -53,7 +53,8 @@ sample_with_one <- function(x, size, ...) {
 }
 
 
-grow_greedy_distance_tree <- function(seq, num, mtry) {
+
+grow_greedy_distance_tree <- function(seq, mat, mtry) {
 
   if(length(seq) == 1 | var(seq) == 0) return(c(seq))
 
@@ -63,9 +64,9 @@ grow_greedy_distance_tree <- function(seq, num, mtry) {
   gain <- numeric(mtry)
   examplars_1 <- numeric(mtry)
   examplars_2 <- numeric(mtry)
-  dist_mat <- as.matrix(dist(num))
+  dist_mat <- as.matrix(dist(mat))
 
-  for (k in seq_along(mtry)) {
+  for (k in seq_along(1:mtry)) {
     exemplar_1_idx <- sample_with_one(which(seq == 1),1)
     exemplar_2_idx <- sample_with_one(which(seq == 2),1)
     examplar_1_dist <- dist_mat[exemplar_1_idx,]
@@ -73,8 +74,8 @@ grow_greedy_distance_tree <- function(seq, num, mtry) {
     idx <- which(examplar_1_dist < examplar_2_dist)
     seq_l <- seq[idx]
     seq_r <- seq[-idx]
-    weighted_child_gini[k] <- DescTools::Gini(seq_l, unbiased = FALSE) * length(seq_l) +
-      DescTools::Gini(seq_l, unbiased = FALSE) * length(seq_l)
+    weighted_child_gini[k] <- (DescTools::Gini(seq_l, unbiased = FALSE) * length(seq_l) +
+      DescTools::Gini(seq_r, unbiased = FALSE) * length(seq_r))/length(seq)
     gain[k] <- parent_gini - weighted_child_gini[k]
     examplars_1[k] <- exemplar_1_idx
     examplars_2[k] <- exemplar_2_idx
@@ -88,9 +89,9 @@ grow_greedy_distance_tree <- function(seq, num, mtry) {
   idx <- which(examplar_1_dist < examplar_2_dist)
 
   seq_l <- seq[idx]
-  num_l <- num[idx]
+  mat_l <- mat[idx,]
   seq_r <- seq[-idx]
-  num_r <- num[-idx]
+  mat_r <- mat[-idx,]
 
 #  cat("Examplar 1:", num[best_examplar_1], "Examplar 2:", num[best_examplar_2],"\n")
 #  cat("Class split:", seq_l, "<->", seq_r, "\n")
@@ -98,19 +99,20 @@ grow_greedy_distance_tree <- function(seq, num, mtry) {
 #  cat("----------------------------------------\n")
 
   if (is.null(seq_l)) {
-    grow_greedy_distance_tree(seq_r, num_r, mtry)
+    grow_greedy_distance_tree(seq_r, mat_l, mtry)
   } else if (is.null(seq_r)) {
-    grow_greedy_distance_tree(seq_l, num_l, mtry)
+    grow_greedy_distance_tree(seq_l, mat_r, mtry)
   } else {
 
-    list(grow_greedy_distance_tree(seq_l, num_l, mtry), grow_greedy_distance_tree(seq_r, num_r, mtry))
+    list(grow_greedy_distance_tree(seq_l, mat_l, mtry), grow_greedy_distance_tree(seq_r, mat_r, mtry))
   }
 }
 
-n <- 5
+n <- 100
 
+mat <- matrix(data = rnorm(n*2), nrow = n, ncol = 2)
 seq <- rbinom(n, 1, prob = .5) + 1
-num <- dplyr::if_else(seq == 1, rnorm(n, 2), rnorm(n,0))
+#num <- dplyr::if_else(seq == 1, rnorm(n, 2), rnorm(n,0))
 debug(grow_greedy_distance_tree)
-l <- grow_greedy_distance_tree(seq = seq, num = num, mtry = 1)
+l <- grow_greedy_distance_tree(seq = seq, mat = mat, mtry = 3)
 unlist(l)
