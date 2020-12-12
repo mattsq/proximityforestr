@@ -93,10 +93,10 @@ grow_greedy_distance_tree <- function(seq, mat, mtry) {
   seq_r <- seq[-idx]
   mat_r <- mat[-idx,]
 
-#  cat("Examplar 1:", num[best_examplar_1], "Examplar 2:", num[best_examplar_2],"\n")
-#  cat("Class split:", seq_l, "<->", seq_r, "\n")
+  cat("Examplar 1:", mat[best_examplar_1,], "Examplar 2:", mat[best_examplar_2,],"\n")
+  cat("Class split:", seq_l, "<->", seq_r, "\n")
 #  cat("Value Split:", num_l, "<->", num_r, "\n")
-#  cat("----------------------------------------\n")
+  cat("----------------------------------------\n")
 
   if (is.null(seq_l)) {
     grow_greedy_distance_tree(seq_r, mat_l, mtry)
@@ -110,9 +110,10 @@ grow_greedy_distance_tree <- function(seq, mat, mtry) {
 
 n <- 100
 
-mat <- matrix(data = rnorm(n*2), nrow = n, ncol = 2)
-seq <- rbinom(n, 1, prob = .5) + 1
+mat <- tibble(x1 = rnorm(n), x2 = rnorm(n))
+seq <- rbinom(n, 1, prob = if_else(mat$x1 > mat$x2, .95, .05)) + 1
 #num <- dplyr::if_else(seq == 1, rnorm(n, 2), rnorm(n,0))
+mat <- as.matrix(mat)
 debug(grow_greedy_distance_tree)
-l <- grow_greedy_distance_tree(seq = seq, mat = mat, mtry = 3)
+l <- grow_greedy_distance_tree(seq = seq, mat = mat, mtry = 50)
 unlist(l)
