@@ -54,7 +54,9 @@ sample_with_one <- function(x, size, ...) {
 
 
 
-grow_greedy_distance_tree <- function(seq, mat, mtry) {
+grow_greedy_distance_tree <- function(seq, mat, mtry,
+                                      dist_measures = c("euclidean", "maximum", "manhattan", "canberra", "minkowski"),
+                                      verbose = TRUE) {
 
   if(length(seq) == 1 | var(seq) == 0) return(c(seq))
 
@@ -64,9 +66,11 @@ grow_greedy_distance_tree <- function(seq, mat, mtry) {
   gain <- numeric(mtry)
   examplars_1 <- numeric(mtry)
   examplars_2 <- numeric(mtry)
-  dist_mat <- as.matrix(dist(mat))
+  measure_used <- character(mtry)
 
   for (k in seq_along(1:mtry)) {
+    used_distance_measure <- sample_with_one(dist_measures, 1)
+    dist_mat <- as.matrix(dist(mat, method = used_distance_measure))
     exemplar_1_idx <- sample_with_one(which(seq == 1),1)
     exemplar_2_idx <- sample_with_one(which(seq == 2),1)
     examplar_1_dist <- dist_mat[exemplar_1_idx,]
@@ -79,12 +83,15 @@ grow_greedy_distance_tree <- function(seq, mat, mtry) {
     gain[k] <- parent_gini - weighted_child_gini[k]
     examplars_1[k] <- exemplar_1_idx
     examplars_2[k] <- exemplar_2_idx
+    measure_used[k] <- used_distance_measure
   }
 
   best_examplar_1 <- examplars_1[which.max(gain)]
   best_examplar_2 <- examplars_2[which.max(gain)]
-  examplar_1_dist <- dist_mat[best_examplar_1,]
-  examplar_2_dist <- dist_mat[best_examplar_2,]
+  best_dist_mat <- as.matrix(dist(mat, method = measure_used[which.max(gain)]))
+
+  examplar_1_dist <- best_dist_mat[best_examplar_1,]
+  examplar_2_dist <- best_dist_mat[best_examplar_2,]
 
   idx <- which(examplar_1_dist < examplar_2_dist)
 
@@ -93,11 +100,13 @@ grow_greedy_distance_tree <- function(seq, mat, mtry) {
   seq_r <- seq[-idx]
   mat_r <- mat[-idx,]
 
-  cat("Examplar 1:", mat[best_examplar_1,], "Examplar 2:", mat[best_examplar_2,],"\n")
-  cat("Class split:", seq_l, "<->", seq_r, "\n")
-#  cat("Value Split:", num_l, "<->", num_r, "\n")
-  cat("----------------------------------------\n")
-
+  if (verbose) {
+    cat("Examplar 1:", mat[best_examplar_1,], "Examplar 2:", mat[best_examplar_2,],"\n")
+    cat("Measure used:", measure_used[which.max(gain)], "\n")
+    cat("Class split:", seq_l, "<->", seq_r, "\n")
+  #  cat("Value Split:", num_l, "<->", num_r, "\n")
+    cat("----------------------------------------\n")
+  }
   if (is.null(seq_l)) {
     grow_greedy_distance_tree(seq_r, mat_l, mtry)
   } else if (is.null(seq_r)) {
@@ -108,12 +117,12 @@ grow_greedy_distance_tree <- function(seq, mat, mtry) {
   }
 }
 
-n <- 100
+n <- 250
 
 mat <- tibble(x1 = rnorm(n), x2 = rnorm(n))
-seq <- rbinom(n, 1, prob = if_else(mat$x1 > mat$x2, .95, .05)) + 1
+seq <- rbinom(n, 1, prob = if_else(mat$x1 > 0 & mat$x2 < 0, .95, .05)) + 1
 #num <- dplyr::if_else(seq == 1, rnorm(n, 2), rnorm(n,0))
 mat <- as.matrix(mat)
-debug(grow_greedy_distance_tree)
-l <- grow_greedy_distance_tree(seq = seq, mat = mat, mtry = 50)
-unlist(l)
+undebug(grow_greedy_distance_tree)
+l <- grow_greedy_distance_tree(seq = seq, mat = mat, mtry = 100, verbose = FALSE)
+k unlist(l)
