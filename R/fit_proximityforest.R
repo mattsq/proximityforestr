@@ -1,5 +1,4 @@
-data <- tsforest::FreezerRegularTrain_TRAIN
-mtry <- 10
+
 #
 # Remaining questions:
 # - How do you store the splits (as a tree of indexes?) - DONE

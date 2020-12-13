@@ -42,20 +42,8 @@ grow_greedy_tree <- function(seq, num, mtry) {
   }
 }
 
-seq <- rbinom(1000, 1, prob = .5) + 1
-undebug(grow_greedy_tree)
-l <- grow_greedy_tree(seq = seq, num = rnorm(10), mtry = 50)
-unlist(l)
-
-sample_with_one <- function(x, size, ...) {
-  if (length(x) == 1) return(rep(x, size))
-  else sample(x, size, ...)
-}
-
-
-
-grow_greedy_distance_tree <- function(seq, mat, mtry,
-                                      dist_measures = c("euclidean", "maximum", "manhattan", "canberra", "minkowski"),
+grow_greedy_distance_tree <- function(node, seq, mat, mtry,
+                                      dist_measures = distance_measures,
                                       verbose = TRUE) {
 
   if(length(seq) == 1 | var(seq) == 0) return(c(seq))
@@ -117,12 +105,18 @@ grow_greedy_distance_tree <- function(seq, mat, mtry,
   }
 }
 
-n <- 250
+# Theory:
+#  Wrap the recursive function in a higher level function.
+#  Initialise a parent node list object
+#  The recursive function takes a node object along with arguments.
+#  During the call of the function, use `<<-` to assign the current state of the node
+#  To a higher level store that then knows what the tree looks like
+#  Something like:
+#   Parent-ID ; L-child-ID; R-child-ID; dist_used; parent-idx; L-idx;  R-idx ; L-examplar-idx; R-exemplar-idx;
+#   "dfgdhhfh"; "4tey8725"; "et982896"; "maximum"; c(1,5,6,4); c(1,5); c(6,4); 1             ; 6
+#
 
-mat <- tibble(x1 = rnorm(n), x2 = rnorm(n))
-seq <- rbinom(n, 1, prob = if_else(mat$x1 > 0 & mat$x2 < 0, .95, .05)) + 1
-#num <- dplyr::if_else(seq == 1, rnorm(n, 2), rnorm(n,0))
-mat <- as.matrix(mat)
-undebug(grow_greedy_distance_tree)
-l <- grow_greedy_distance_tree(seq = seq, mat = mat, mtry = 100, verbose = FALSE)
-k unlist(l)
+
+
+
+
