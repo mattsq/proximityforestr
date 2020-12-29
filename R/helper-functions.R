@@ -21,11 +21,33 @@ simple_node <- function(level) {
 }
 
 tabular_node <- function() {
-  tibble::tibble(
-    level = numeric(1),
-    parent_id = character(1),
-    child_id = character(1),
-    idx = list(),
-    dist_used = character(1)
+  return(dplyr::tibble(
+    parent_id = NA_character_,
+    l_child_id = NA_character_,
+    r_child_id = NA_character_,
+    dist_used = NA_character_,
+    parent_idx = list(NA_real_),
+    l_idx = list(NA_real_),
+    r_idx = list(NA_real_),
+    l_examplar_idx = NA_integer_,
+    r_examplar_idx = NA_integer_
+  ))
+}
+
+generate_random_id <- function(n) {
+  return(
+    paste(sample(c(1:9,letters,LETTERS), size = n, replace = TRUE), collapse = "")
   )
 }
+
+
+# dplyr::tibble(
+#   parent_id = replicate(5, paste(sample(c(letters, 1:9), 10), collapse = ""), TRUE),
+#   l_child_id = replicate(5, paste(sample(c(letters, 1:9), 10), collapse = ""), TRUE),
+#   r_child_id = replicate(5, paste(sample(c(letters, 1:9), 10), collapse = ""), TRUE),
+#   dist_used = sample(distance_measures, 5, TRUE),
+#   l_idx = purrr::map(1:5, ~ sample(1:100, 10)),
+#   r_idx = purrr::map(1:5, ~ sample(1:100, 10)),
+#   l_examplar_idx = sample(1:100, 5),
+#   r_examplar_idx = sample(1:100, 5)
+# )

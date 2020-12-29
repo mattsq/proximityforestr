@@ -42,7 +42,7 @@ grow_greedy_tree <- function(seq, num, mtry) {
   }
 }
 
-grow_greedy_distance_tree <- function(node, seq, mat, mtry,
+grow_greedy_distance_tree <- function(seq, mat, mtry,
                                       dist_measures = distance_measures,
                                       verbose = TRUE) {
 
@@ -116,7 +116,52 @@ grow_greedy_distance_tree <- function(node, seq, mat, mtry,
 #   "dfgdhhfh"; "4tey8725"; "et982896"; "maximum"; c(1,5,6,4); c(1,5); c(6,4); 1             ; 6
 #
 
+parent_id <- generate_random_id(20)
+recusss <- function(parent_id, seq) {
+  if (length(seq) == 1) {
+    return(dplyr::tibble(
+      parent_id = parent_id,
+      l_child_id = NA_character_,
+      r_child_id = NA_character_,
+      seq = list(seq),
+      left = NA,
+      right = NA
+        ))
+  }
+  random_splitpoint <- sample(1:length(seq), 1)
+  l_idx <- 1:random_splitpoint
+  r_idx <- (random_splitpoint+1):length(seq)
+  l_child_id <- generate_random_id(20)
+  r_child_id <- generate_random_id(20)
+  out_table <- dplyr::tibble(
+    parent_id = parent_id,
+    l_child_id = l_child_id,
+    r_child_id = r_child_id,
+    seq = list(seq),
+    left = list(NA),
+    right = list(NA)
+  )
 
+  out_table$left[[1]] <- recusss(l_child_id, seq[l_idx])
+  out_table$right[[1]] <- recusss(r_child_id, seq[r_idx])
+
+  return(
+    out_table
+  )
+}
+
+out <- recusss(parent_id, seq)
+debug(recusss)
+
+q <- bind_rows(out, out$left, out$right)
+
+reducer <- function(df) {
+  bind_rows(df, df$left, df$right)
+}
+
+while (min(map_dbl(q$seq, length)) > 1) {
+  q <- bind_rows(q, q$left, q$right)
+}
 
 
 
